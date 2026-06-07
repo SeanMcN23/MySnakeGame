@@ -9,16 +9,27 @@ Original file is located at
 
 # going to use python to make a snake game
 
+# now step 5, lets make the walls either wrap the snake around the play zone or the snake can
+# be killed by hitting the game wall, either way
 class Snake:
 
   def __init__(self,body,direction):
     self.body=body
     self.direction=direction
+    self.hit_itself=False
 
   def take_step(self,position):
     # this is some python trickery, but basically, body[1:] this removes the first element, then the +
     #[] position will add an element to the end. wild
+
+    # what im thinking is, lets first see if position is in the body itself, then we can easily go ahead and
+    #return something to tell the player, you have died
+
+    if position in self.body:
+      self.hit_itself=True
+
     self.body=self.body[1:] + [position]
+
 
   def set_direction(self,direction):
     self.direction=direction
@@ -26,23 +37,56 @@ class Snake:
   def head(self):
     return self.body[-1]
 
+  def get_hit_itself(self):
+    return self.hit_itself
+
 
 
 
 #class Apple:
 class Game:
 
-  def __init__(self,height, width):
+  def __init__(self,height, width,which_game):
     self.height=height
     self.width=width
     self.snake= Snake([(1,1),(1,2),(1,3),(1,4)],DOWN)
+    self.which_game=which_game
 
   def command(self,direction):
     self.snake.set_direction(direction)
     head=self.snake.head()
 
     newHead=(head[0]+direction[0],head[1]+direction[1])
-    self.snake.take_step(newHead)
+
+
+    print(newHead)
+    if self.which_game == '1':
+      self.snake.take_step(newHead)
+      if (newHead[0] == 0 or newHead[0]==self.height-1):
+        return True
+
+      elif(newHead[1] == 0 or newHead[1]==self.width-1):
+        return True
+    else:
+      if newHead[0] == 0:
+        corrected=(self.height-2,newHead[1])
+      elif newHead[0] == self.height-1:
+        corrcted=(1,newHead[1])
+      elif newHead[1] == self.width-1:
+        corrected=(newHead[0],1)
+      elif newHead[1] == 0:
+        corrected=(newHead[0],self.width-2)
+      else:
+        corrected=newHead
+      self.snake.take_step(corrected)
+
+
+
+
+
+
+    return self.snake.get_hit_itself()
+
 
 
   def render(self):
@@ -73,6 +117,8 @@ class Game:
             print(" ",end="")
 
 
+
+
   def board_matrix(self):
     # return matrix
     matrix= [[None] * self.width for _ in range(self.height)]
@@ -100,11 +146,18 @@ DOWN=(1,0)
 
 
 
+while True:
+  which_game=input("What Rule set would you like to play with? Do '1' for for Wall Collision , do '2' for Wall Wrap: ")
+  if which_game == '1' or which_game == '2':
+    break
 
 
-
-game=Game(20,20)
+game=Game(20,20,which_game)
 game.render()
+hit_itself=False
+
+
+
 
 # prob want to do a while loop, and for each key pressed, just change the board to the direction ive gone or something
 play=True
@@ -113,18 +166,23 @@ while play:
   dirt=input("press 'wsda' to move the snake in a direction or 'q' to quite: ")
 
   if dirt=='w':
-    game.command(UP)
+    hit_itself=game.command(UP)
     game.render()
   elif dirt=='s':
-    game.command(DOWN)
+    hit_itself=game.command(DOWN)
     game.render()
   elif dirt=='a':
-    game.command(LEFT)
+    hit_itself=game.command(LEFT)
     game.render()
   elif dirt=='d':
-    game.command(RIGHT)
-    game.render()
+   hit_itself= game.command(RIGHT)
+   game.render()
   elif dirt=='q':
     play=False
-    print("Thanks for Playing!")
+    print("You have decided to Exit,Thanks for Playing!")
+
+  if hit_itself == True:
+    play=False
+    print("")
+    print("Game over, Better Luck Next Time!")
 
