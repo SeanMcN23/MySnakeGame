@@ -11,12 +11,17 @@ Original file is located at
 
 # now step 5, lets make the walls either wrap the snake around the play zone or the snake can
 # be killed by hitting the game wall, either way
+import random
+
+
+# ok now onto the final implementation we need, which is the apple.
 class Snake:
 
   def __init__(self,body,direction):
     self.body=body
     self.direction=direction
     self.hit_itself=False
+    self.tail=None
 
   def take_step(self,position):
     # this is some python trickery, but basically, body[1:] this removes the first element, then the +
@@ -28,7 +33,9 @@ class Snake:
     if position in self.body:
       self.hit_itself=True
 
+    self.tail=self.body[0]
     self.body=self.body[1:] + [position]
+
 
 
   def set_direction(self,direction):
@@ -39,11 +46,39 @@ class Snake:
 
   def get_hit_itself(self):
     return self.hit_itself
+  def add_to_body(self):
+    print(self.tail)
+    self.body=[self.tail] + self.body
+  def get_tail(self):
+    return self.tail
+  def get_body(self):
+    return self.body
 
 
 
 
-#class Apple:
+
+
+
+class Apple:
+  def __init__(self,height,width):
+    self.coord1= random.randint(1,height-2)
+    self.coord2= random.randint(1,width-2)
+    self.height=height
+    self.width=width
+
+  def getCoord(self):
+    return (self.coord1,self.coord2)
+  def reCalculate(self):
+    self.coord1=random.randint(1,self.height-2)
+    self.coord2= random.randint(1,self.width-2)
+    return (self.coord1,self.coord2)
+
+
+
+
+
+
 class Game:
 
   def __init__(self,height, width,which_game):
@@ -51,6 +86,7 @@ class Game:
     self.width=width
     self.snake= Snake([(1,1),(1,2),(1,3),(1,4)],DOWN)
     self.which_game=which_game
+    self.apple=Apple(height,width)
 
   def command(self,direction):
     self.snake.set_direction(direction)
@@ -59,7 +95,7 @@ class Game:
     newHead=(head[0]+direction[0],head[1]+direction[1])
 
 
-    print(newHead)
+    #print(newHead)
     if self.which_game == '1':
       self.snake.take_step(newHead)
       if (newHead[0] == 0 or newHead[0]==self.height-1):
@@ -113,22 +149,51 @@ class Game:
           elif matrix[i][j]=="X":
             print("X", end="")
 
+          elif matrix[i][j] == "@":
+            print("@", end="")
+
+
           else:
             print(" ",end="")
 
 
 
-
+  def snake_get_Score(self):
+    return len(self.snake.get_body())
   def board_matrix(self):
     # return matrix
     matrix= [[None] * self.width for _ in range(self.height)]
 
 
 
+
+
     for row,col in self.snake.body:
       matrix[row][col]= "O"
       row2,col2= row,col
+
+
+    apple_coord=self.apple.getCoord()
+
+
+    if matrix[row2][col2] == matrix[apple_coord[0]][apple_coord[1]]:
+      # need to add one to the snake body now
+
+      self.snake.add_to_body()
+      matrix[self.snake.get_tail()[0]][self.snake.get_tail()[1]]="O"
+
+      apple_coord=self.apple.reCalculate()
+
+    if apple_coord in self.snake.body:
+      apple_coord=self.apple.reCalculate()
+
+
+
     matrix[row2][col2]="X"
+
+    matrix[int(apple_coord[0])][int(apple_coord[1])]="@"
+
+
 
 
 
@@ -163,7 +228,10 @@ hit_itself=False
 play=True
 while play:
   print("")
+  print("Your current score is: ", game.snake_get_Score())
   dirt=input("press 'wsda' to move the snake in a direction or 'q' to quite: ")
+
+
 
   if dirt=='w':
     hit_itself=game.command(UP)
@@ -184,5 +252,7 @@ while play:
   if hit_itself == True:
     play=False
     print("")
+
     print("Game over, Better Luck Next Time!")
+    print("Your Final score was: ", game.snake_get_Score())
 
